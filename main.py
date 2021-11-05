@@ -27,9 +27,10 @@ class Settings:
     # Text
     title_gameover = 'Verloren!'
     title_resume = 'Drücken Sie <Space>'
-
+    title_points = 'Punkte: %s'
+    
     font_pause = ('arialblack', 64)
-    font_points = ('arialblack', 24)
+    font_points = ('arialblack', 28)
 
 class Background:
     def __init__(self) -> None:
@@ -91,6 +92,7 @@ class Stone(pygame.sprite.Sprite):
 
         if self.rect.top > Settings.window_height:
             self.kill()
+            game.points += self.rand_size_ratio * 10
 
             if game.stone_spawn_cooldown_initial > game.stone_spawn_cooldown_min:
                 print("slow cooldown")
@@ -311,11 +313,20 @@ class Game:
         self.screen.blit(text_resume, text_resume_rect)
 
         pygame.display.flip()
+    
+    def draw_points(self):
+        points_text = self.font_points.render(Settings.title_points.replace('%s', str(self.points)), True, (255, 255, 255))
+        points_text_rect = points_text.get_rect()
+        points_text_rect.top = Settings.window_height - 50
+        points_text_rect.left = 25
+
+        self.screen.blit(points_text, points_text_rect)
 
     def draw(self) -> None:
         self.background.draw()
         self.pigeon.draw()
         self.stones.draw(self.screen)
+        self.draw_points()
         pygame.display.flip()
 
 if __name__ == '__main__':
