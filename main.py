@@ -22,6 +22,7 @@ class Settings:
     pigeon_bottom_offset = 200
     stone_count_start = 10
     stone_count_max = 200
+    lives_initial = 3
 
 class Background:
     def __init__(self) -> None:
@@ -148,6 +149,19 @@ class Pigeon(pygame.sprite.Sprite):
                 self.move_up(self.speed)
             else:
                 self.move_down(self.speed)
+        self.collision_stone()
+
+    def collision_stone(self):
+        hits = pygame.sprite.spritecollide(self, game.stones, False, pygame.sprite.collide_mask)
+
+        if len(hits) > 0:
+            hits[0].kill()
+            self.hit_by_stone()
+    
+    def hit_by_stone(self):
+        game.lives -= 1
+        if game.lives <= 0:
+            game.game_over = True
     
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
@@ -192,6 +206,9 @@ class Game:
         self.background = Background()
         self.stones = pygame.sprite.Group()
         self.pigeon = Pigeon()
+        
+        self.lives = Settings.lives_initial
+        self.game_over = False
 
         self.stones_on_screen = Settings.stone_count_start
         self.stone_speed = 10
@@ -206,8 +223,12 @@ class Game:
             self.clock.tick(Settings.window_fps)
 
             self.watch_events()
-            self.update()
-            self.draw()
+
+            if not self.game_over:
+                self.update()
+                self.draw()
+            else:
+                self.render_game_over()
 
         pygame.quit()
     
@@ -249,6 +270,8 @@ class Game:
         else:
             self.stone_spawn_cooldown -= 1
 
+    def render_game_over(self) -> None:
+        print('Game Over')
 
     def draw(self) -> None:
         self.background.draw()
