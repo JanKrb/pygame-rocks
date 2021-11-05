@@ -92,7 +92,7 @@ class Stone(pygame.sprite.Sprite):
 
         if self.rect.top > Settings.window_height:
             self.kill()
-            game.points += self.rand_size_ratio * 10
+            game.points += int(self.rand_size_ratio * 10) # Instead of giving 1 point as the task claims, i give the user points by the size of the rock
 
             if game.stone_spawn_cooldown_initial > game.stone_spawn_cooldown_min:
                 game.stone_spawn_cooldown_initial -= 5
@@ -166,7 +166,9 @@ class Pigeon(pygame.sprite.Sprite):
             self.hit_by_stone()
     
     def hit_by_stone(self):
-        game.points += 5
+        game.stones.empty()
+        self.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
+        self.rect.left = Settings.window_width // 2 - self.rect.width // 2
 
         game.lives -= 1
         if game.lives <= 0:
