@@ -83,9 +83,9 @@ class Stone(pygame.sprite.Sprite):
             return candidate
 
         pseudo_object = PseudoStoneSprite(self.rand_size_ratio)
-        pseudo_hits = pygame.sprite.spritecollide(pseudo_object, game.stones, False)
+        pseudo_hits = pygame.sprite.spritecollide(pseudo_object, game.stones, False, pygame.sprite.collide_mask)
 
-        if len(pseudo_hits) > 0:
+        if len(pseudo_hits) > 1:
             return self.find_free_space_on_y_axis(game, depth + 1)
 
         return candidate
