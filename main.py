@@ -20,6 +20,8 @@ class Settings:
     sprite_size_pigeon = 0.4
     max_spawn_attemps = 50
     pigeon_bottom_offset = 200
+    stone_count_start = 10
+    stone_count_max = 200
 
 class Background:
     def __init__(self) -> None:
@@ -58,16 +60,42 @@ class PseudoStoneSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
 class Stone(pygame.sprite.Sprite):
-    def __init__(self, game) -> None:
+    def __init__(self, game, speed) -> None:
         super().__init__()
 
         self.image = pygame.image.load(os.path.join(Settings.path_images, 'stone.png'))
         self.rect = self.image.get_rect()
         self.rand_size_ratio = random.uniform(0.08, 0.2)
+        self.speed_y = int(self.rand_size_ratio * speed)
+        
+        if self.speed_y <= 0:
+            self.speed_y = 1 # Minimal speed
+
         self.resize_image()
         self.rect.top = 15
         self.rect.left = self.find_free_space_on_y_axis(game)
     
+    def draw(self) -> None:
+        game.screen.blit(self.image, self.rect)
+    
+    def update(self) -> None:
+        self.rect.top += self.speed_y
+
+        if self.rect.top > Settings.window_height:
+            self.kill()
+
+            if game.stone_spawn_cooldown_initial > game.stone_spawn_cooldown_min:
+                print("slow cooldown")
+                game.stone_spawn_cooldown_initial -= 5
+            else: 
+                game.stone_spawn_cooldown_initial = game.stone_spawn_cooldown_min
+            
+            if game.stones_on_screen < Settings.stone_count_max:
+                print("incr count")
+                game.stones_on_screen += 1
+            else:
+                game.stones_on_screen = Settings.stone_count_max
+
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
             int(self.rect.width * self.rand_size_ratio),
@@ -99,14 +127,27 @@ class Pigeon(pygame.sprite.Sprite):
         self.resize_image()
         self.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
         self.rect.left = Settings.window_width // 2 - self.rect.width // 2
-        self.speed = 0
-        self.direction = 1 # Positive: Right; Negative: Left
+        self.speed = 3
+        self.direction_hori = 1 # Positive: Right; Negative: Left
+        self.direction_vert = 1 # Positive: Iü; Negative: Down
+        self.looking = 1 # Positive: Right; Negative: Left
+        self.moving_hori = False
+        self.moving_vert = False
     
     def draw(self) -> None:
         game.screen.blit(self.image, self.rect)
 
     def update(self) -> None:
-        pass
+        if self.moving_hori:
+            if self.direction_hori > 0:
+                self.move_right(self.speed)
+            else:
+                self.move_left(self.speed)
+        if self.moving_vert:
+            if self.direction_vert > 0:
+                self.move_up(self.speed)
+            else:
+                self.move_down(self.speed)
     
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
@@ -116,16 +157,23 @@ class Pigeon(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
     
     def move_right(self, speed=1):
-        if self.direction < 0:
-            # Make pigeon look to left
-            pass
+        if self.looking < 0:
+            self.image = pygame.transform.flip(self.image, True, False)
+            self.looking = 1
+
         self.rect.left += speed
 
     def move_left(self, speed=1):
-        if self.direction > 0:
-            # Make pigeon look to right
-            pass
+        if self.looking > 0:
+            self.image = pygame.transform.flip(self.image, True, False)
+            self.looking = -1
         self.rect.left -= speed
+    
+    def move_up(self, speed=1):
+        self.rect.top -= speed
+    
+    def move_down(self, speed=1):
+        self.rect.top += speed
 
 class Game:
     def __init__(self) -> None:
@@ -145,14 +193,11 @@ class Game:
         self.stones = pygame.sprite.Group()
         self.pigeon = Pigeon()
 
-        for _ in range(15):
-            self.stones.add(Stone(self))
-
-        self.enemy_spawn_cooldown_current = 1000
-        self.enemy_spawn_cooldown_counter = self.enemy_spawn_cooldown_current
-        self.enemy_spawn_cooldown_minimal = 100
-        self.enemy_spawn_cooldown_step = 5
-
+        self.stones_on_screen = Settings.stone_count_start
+        self.stone_speed = 10
+        self.stone_spawn_cooldown_initial = 150
+        self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
+        self.stone_spawn_cooldown_min = 20
 
     def start(self) -> None:
         self.running = True
@@ -173,23 +218,36 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
-                elif event.key == pygame.K_d:
-                    self.pigeon.move_right()
-                elif event.key == pygame.K_a:
-                    self.pigeon.move_left()
+                elif event.key == pygame.K_RIGHT:
+                    self.pigeon.direction_hori = 1
+                    self.pigeon.moving_hori = True
+                elif event.key == pygame.K_LEFT:
+                    self.pigeon.direction_hori = -1
+                    self.pigeon.moving_hori = True
+                elif event.key == pygame.K_UP:
+                    self.pigeon.direction_vert = 1
+                    self.pigeon.moving_vert = True
+                elif event.key == pygame.K_DOWN:
+                    self.pigeon.direction_vert = -1
+                    self.pigeon.moving_vert = True
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
+                    self.pigeon.moving_hori = False
+                elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                    self.pigeon.moving_vert = False
 
     def update(self) -> None:
         self.background.update()
         self.pigeon.update()
         self.stones.update()
 
-        # Spawn enemies
-        if self.enemy_spawn_cooldown_counter > 0:
-            self.enemy_spawn_cooldown_counter -= 0
+        # Respawn stones
+        if self.stone_spawn_cooldown <= 0:
+            if len(self.stones) < self.stones_on_screen:
+                game.stones.add(Stone(self, self.stone_speed))
+                self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
         else:
-            # Spawn
-            self.enemy_spawn_cooldown_current -= self.enemy_spawn_cooldown_step
-            self.enemy_spawn_cooldown_counter = self.enemy_spawn_cooldown_current
+            self.stone_spawn_cooldown -= 1
 
 
     def draw(self) -> None:
