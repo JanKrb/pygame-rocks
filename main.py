@@ -281,6 +281,8 @@ class Game:
         self.pigeon.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
         self.pigeon.rect.left = Settings.window_width // 2 - self.pigeon.rect.width // 2
         self.points = 0
+        self.stone_spawn_cooldown_initial = 150
+        self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
         self.game_over = False
 
     def update(self) -> None:
