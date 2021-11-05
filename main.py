@@ -223,7 +223,7 @@ class Game:
         self.points = 0
 
         self.stones_on_screen = Settings.stone_count_start
-        self.stone_speed = 10
+        self.stone_speed = 25
         self.stone_spawn_cooldown_initial = 150
         self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
         self.stone_spawn_cooldown_min = 20
