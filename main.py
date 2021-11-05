@@ -52,8 +52,8 @@ class PseudoStoneSprite(pygame.sprite.Sprite):
     
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
-            (self.rect.width * self.rand_size_ratio),
-            (self.rect.height * self.rand_size_ratio)
+            int(self.rect.width * self.rand_size_ratio),
+            int(self.rect.height * self.rand_size_ratio)
         ))
         self.rect = self.image.get_rect()
 
@@ -63,15 +63,15 @@ class Stone(pygame.sprite.Sprite):
 
         self.image = pygame.image.load(os.path.join(Settings.path_images, 'stone.png'))
         self.rect = self.image.get_rect()
-        self.rand_size_ratio = random.uniform(0.01, 0.2)
+        self.rand_size_ratio = random.uniform(0.08, 0.2)
         self.resize_image()
         self.rect.top = 15
         self.rect.left = self.find_free_space_on_y_axis(game)
     
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
-            (self.rect.width * self.rand_size_ratio),
-            (self.rect.height * self.rand_size_ratio)
+            int(self.rect.width * self.rand_size_ratio),
+            int(self.rect.height * self.rand_size_ratio)
         ))
         self.rect = self.image.get_rect()
 
@@ -94,11 +94,8 @@ class Pigeon(pygame.sprite.Sprite):
     def __init__(self) -> None:
         super().__init__()
 
-        self.images = [pygame.image.load(os.path.join(Settings.path_images, 'pigeon', str(image) + '.png')) for image in range(1, 7)]
-        self.image_index = 0
-        self.image = self.images[self.image_index]
+        self.image = pygame.image.load(os.path.join(Settings.path_images, 'pigeon.png'))
         self.rect = self.image.get_rect()
-        self.animation_cooldown = 5
         self.resize_image()
         self.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
         self.rect.left = Settings.window_width // 2 - self.rect.width // 2
@@ -107,35 +104,16 @@ class Pigeon(pygame.sprite.Sprite):
     
     def draw(self) -> None:
         game.screen.blit(self.image, self.rect)
-    
-    def get_position(self):
-        return (self.rect.top, self.rect.left)
 
     def update(self) -> None:
-        prev_pos = self.get_position()
-
-        if self.animation_cooldown <= 0:
-            self.image_index += 1
-            if self.image_index >= len(self.images):
-                self.image_index = 0
-
-            self.image = self.images[self.image_index]
-            self.rect = self.image.get_rect()
-            self.rect.top = prev_pos[0]
-            self.rect.left = prev_pos[1]
-            self.resize_image(prev_pos)
-            self.animation_cooldown = 5
-        else:
-            self.animation_cooldown -= 1
+        pass
     
-    def resize_image(self, prev_pos=(0,0)):
+    def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
-            (self.rect.width * Settings.sprite_size_pigeon),
-            (self.rect.height * Settings.sprite_size_pigeon)
+            int(self.rect.width * Settings.sprite_size_pigeon),
+            int(self.rect.height * Settings.sprite_size_pigeon)
         ))
         self.rect = self.image.get_rect()
-        self.rect.top = prev_pos[0]
-        self.rect.left = prev_pos[1]
     
     def move_right(self, speed=1):
         if self.direction < 0:
@@ -143,17 +121,11 @@ class Pigeon(pygame.sprite.Sprite):
             pass
         self.rect.left += speed
 
-        prev_pos = self.get_position()
-        self.resize_image(prev_pos)
-
     def move_left(self, speed=1):
         if self.direction > 0:
             # Make pigeon look to right
             pass
         self.rect.left -= speed
-
-        prev_pos = self.get_position()
-        self.resize_image(prev_pos)
 
 class Game:
     def __init__(self) -> None:
