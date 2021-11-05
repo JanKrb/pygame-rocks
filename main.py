@@ -95,13 +95,11 @@ class Stone(pygame.sprite.Sprite):
             game.points += self.rand_size_ratio * 10
 
             if game.stone_spawn_cooldown_initial > game.stone_spawn_cooldown_min:
-                print("slow cooldown")
                 game.stone_spawn_cooldown_initial -= 5
             else: 
                 game.stone_spawn_cooldown_initial = game.stone_spawn_cooldown_min
             
             if game.stones_on_screen < Settings.stone_count_max:
-                print("incr count")
                 game.stones_on_screen += 1
             else:
                 game.stones_on_screen = Settings.stone_count_max
