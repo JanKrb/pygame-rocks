@@ -24,6 +24,13 @@ class Settings:
     stone_count_max = 200
     lives_initial = 3
 
+    # Text
+    title_gameover = 'Verloren!'
+    title_resume = 'Drücken Sie <Space>'
+
+    font_pause = ('arialblack', 64)
+    font_points = ('arialblack', 24)
+
 class Background:
     def __init__(self) -> None:
         super().__init__()
@@ -159,6 +166,8 @@ class Pigeon(pygame.sprite.Sprite):
             self.hit_by_stone()
     
     def hit_by_stone(self):
+        game.points += 5
+
         game.lives -= 1
         if game.lives <= 0:
             game.game_over = True
@@ -209,12 +218,17 @@ class Game:
         
         self.lives = Settings.lives_initial
         self.game_over = False
+        self.points = 0
 
         self.stones_on_screen = Settings.stone_count_start
         self.stone_speed = 10
         self.stone_spawn_cooldown_initial = 150
         self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
         self.stone_spawn_cooldown_min = 20
+
+        # Init fonts
+        self.font_pause = pygame.font.SysFont(Settings.font_pause[0], Settings.font_pause[1])
+        self.font_points = pygame.font.SysFont(Settings.font_points[0], Settings.font_points[1])
 
     def start(self) -> None:
         self.running = True
@@ -251,11 +265,21 @@ class Game:
                 elif event.key == pygame.K_DOWN:
                     self.pigeon.direction_vert = -1
                     self.pigeon.moving_vert = True
+                elif event.key == pygame.K_SPACE and self.game_over:
+                    self.reset()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                     self.pigeon.moving_hori = False
                 elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     self.pigeon.moving_vert = False
+
+    def reset(self) -> None:
+        self.lives = Settings.lives_initial
+        self.stones.empty()
+        self.pigeon.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
+        self.pigeon.rect.left = Settings.window_width // 2 - self.pigeon.rect.width // 2
+        self.points = 0
+        self.game_over = False
 
     def update(self) -> None:
         self.background.update()
@@ -271,7 +295,22 @@ class Game:
             self.stone_spawn_cooldown -= 1
 
     def render_game_over(self) -> None:
-        print('Game Over')
+        self.background.draw()
+
+        text = self.font_pause.render(Settings.title_gameover, True, (0, 0, 0))
+        text_rect = text.get_rect()
+        text_rect.top = (Settings.window_height // 2) - (text_rect.height // 2)
+        text_rect.left = (Settings.window_width // 2) - (text_rect.width // 2)
+
+        text_resume = self.font_pause.render(Settings.title_resume, True, (0, 0, 0))
+        text_resume_rect = text_resume.get_rect()
+        text_resume_rect.top = (Settings.window_height // 2) - (text_resume_rect.height // 2) + text_rect.height + 25
+        text_resume_rect.left = (Settings.window_width // 2) - (text_resume_rect.width // 2)
+
+        self.screen.blit(text, text_rect)
+        self.screen.blit(text_resume, text_resume_rect)
+
+        pygame.display.flip()
 
     def draw(self) -> None:
         self.background.draw()
