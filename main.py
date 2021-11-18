@@ -43,6 +43,7 @@ class Background(pygame.sprite.Sprite):
         ))
 
     def draw(self) -> None:
+        # Blit background image at coords 0/0 (top-left)
         game.screen.blit(self.image, (0, 0))
 
     def update(self) -> None:
@@ -63,6 +64,7 @@ class PseudoStoneSprite(pygame.sprite.Sprite):
     
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
+            # Proportional scale down/up
             int(self.rect.width * self.rand_size_ratio),
             int(self.rect.height * self.rand_size_ratio)
         ))
@@ -75,7 +77,7 @@ class Stone(pygame.sprite.Sprite):
         self.image = pygame.image.load(os.path.join(Settings.path_images, 'stone.png'))
         self.rect = self.image.get_rect()
         self.rand_size_ratio = random.uniform(0.08, 0.2)
-        self.speed_y = int(self.rand_size_ratio * speed)
+        self.speed_y = int(self.rand_size_ratio * speed) # Downforce (speed) in relation to its size
         
         if self.speed_y <= 0:
             self.speed_y = 1 # Minimal speed
@@ -89,7 +91,10 @@ class Stone(pygame.sprite.Sprite):
     
     def update(self) -> None:
         self.rect.top += self.speed_y
+        self.sprite_outside_screen()
+        
 
+    def sprite_outside_screen(self):
         if self.rect.top > Settings.window_height:
             self.kill()
             game.points += int(self.rand_size_ratio * 10) # Instead of giving 1 point as the task claims, i give the user points by the size of the rock
@@ -112,16 +117,18 @@ class Stone(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
     def find_free_space_on_y_axis(self, game, depth=0):
-        candidate = random.randint(1, Settings.window_width - self.rect.width)
+        candidate = random.randint(1, Settings.window_width - self.rect.width) # Random unverified position
 
-        if depth > Settings.max_spawn_attemps:
+        if depth > Settings.max_spawn_attemps: # Max recursive depth
             print("Failed to find position")
             return candidate
 
+        # Create pseudo object and check collisions
         pseudo_object = PseudoStoneSprite(self.rand_size_ratio)
         pseudo_hits = pygame.sprite.spritecollide(pseudo_object, game.stones, False, pygame.sprite.collide_mask)
 
         if len(pseudo_hits) > 1:
+            # Find new position if has been pseudo hit
             return self.find_free_space_on_y_axis(game, depth + 1)
 
         return candidate
@@ -137,7 +144,7 @@ class Pigeon(pygame.sprite.Sprite):
         self.rect.left = Settings.window_width // 2 - self.rect.width // 2
         self.speed = 3
         self.direction_hori = 1 # Positive: Right; Negative: Left
-        self.direction_vert = 1 # Positive: Iü; Negative: Down
+        self.direction_vert = 1 # Positive: Up; Negative: Down
         self.looking = 1 # Positive: Right; Negative: Left
         self.moving_hori = False
         self.moving_vert = False
@@ -151,18 +158,20 @@ class Pigeon(pygame.sprite.Sprite):
                 self.move_right(self.speed)
             else:
                 self.move_left(self.speed)
+
         if self.moving_vert:
             if self.direction_vert > 0:
                 self.move_up(self.speed)
             else:
                 self.move_down(self.speed)
+
         self.collision_stone()
 
     def collision_stone(self):
         hits = pygame.sprite.spritecollide(self, game.stones, False, pygame.sprite.collide_mask)
 
         if len(hits) > 0:
-            hits[0].kill()
+            hits[0].kill() # Delete stone
             self.hit_by_stone()
     
     def hit_by_stone(self):
@@ -183,14 +192,14 @@ class Pigeon(pygame.sprite.Sprite):
     
     def move_right(self, speed=1):
         if self.looking < 0:
-            self.image = pygame.transform.flip(self.image, True, False)
+            self.image = pygame.transform.flip(self.image, True, False) # Flip sprite to make it look into the right direction
             self.looking = 1
 
         self.rect.left += speed
 
     def move_left(self, speed=1):
         if self.looking > 0:
-            self.image = pygame.transform.flip(self.image, True, False)
+            self.image = pygame.transform.flip(self.image, True, False) # Flip sprite to make it look into the right direction
             self.looking = -1
         self.rect.left -= speed
     
@@ -276,6 +285,10 @@ class Game:
                     self.pigeon.moving_vert = False
 
     def reset(self) -> None:
+        '''
+        Reset game to the initial
+        '''
+        
         self.lives = Settings.lives_initial
         self.stones.empty()
         self.pigeon.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
