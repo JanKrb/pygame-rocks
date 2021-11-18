@@ -32,7 +32,7 @@ class Settings:
     font_pause = ('arialblack', 64)
     font_points = ('arialblack', 28)
 
-class Background:
+class Background(pygame.sprite.Sprite):
     def __init__(self) -> None:
         super().__init__()
 
