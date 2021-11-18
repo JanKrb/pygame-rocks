@@ -276,8 +276,12 @@ class Game:
                 elif event.key == pygame.K_DOWN:
                     self.pigeon.direction_vert = -1
                     self.pigeon.moving_vert = True
-                elif event.key == pygame.K_SPACE and self.game_over:
-                    self.reset()
+                elif event.key == pygame.K_SPACE:
+                    if self.game_over:
+                        self.reset()
+                    else:
+                        # special effect
+                        pass
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                     self.pigeon.moving_hori = False
