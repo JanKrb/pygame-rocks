@@ -1,3 +1,4 @@
+from math import sqrt
 from typing import Set
 import pygame
 import os
@@ -29,6 +30,7 @@ class Settings:
     title_gameover = 'Verloren!'
     title_resume = 'Drücken Sie <Space>'
     title_points = 'Punkte: %s'
+    title_teleporter = 'Teleporter: %s%'
     
     font_pause = ('arialblack', 64)
     font_points = ('arialblack', 28)
@@ -173,7 +175,7 @@ class Pigeon(pygame.sprite.Sprite):
 
         if len(hits) > 0:
             hits[0].kill() # Delete stone
-            game.hearts.remove(game.hearts.sprites()[0]) # Remove one heart
+            game.hearts.remove(game.hearts.sprites()[0]) # Remove one
             self.hit_by_stone()
     
     def hit_by_stone(self):
@@ -185,6 +187,24 @@ class Pigeon(pygame.sprite.Sprite):
         if game.lives <= 0:
             game.game_over = True
     
+    def random_teleport(self):
+        random_coords = (
+            random.randint(0, Settings.window_width - self.rect.width),
+            random.randint(0, Settings.window_height + self.rect.height)
+        )
+
+        self.rect.left = random_coords[0]
+        self.rect.top = random_coords[1]
+
+        radius_to_delete = 350
+        [sprite.kill() for sprite in game.stones if self.calculate_distance_to_stone(sprite) <= radius_to_delete] # Delete stones in area
+    
+    def calculate_distance_to_stone(self, stone):
+        return abs(sqrt(
+            (stone.rect.left - self.rect.left) ** 2 +
+            (stone.rect.top - self.rect.top) ** 2
+        ))
+
     def resize_image(self):
         self.image = pygame.transform.scale(self.image, (
             int(self.rect.width * Settings.sprite_size_pigeon),
@@ -260,6 +280,8 @@ class Game:
         self.stone_spawn_cooldown_initial = 150
         self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
         self.stone_spawn_cooldown_min = 20
+        self.teleport_cooldown_initial = 2000
+        self.teleport_cooldown = 2000
 
         self.hearts = pygame.sprite.Group()
         for i in range(self.lives):
@@ -268,6 +290,7 @@ class Game:
         # Init fonts
         self.font_pause = pygame.font.SysFont(Settings.font_pause[0], Settings.font_pause[1])
         self.font_points = pygame.font.SysFont(Settings.font_points[0], Settings.font_points[1])
+        self.font_teleports = pygame.font.SysFont(Settings.font_points[0], Settings.font_points[1])
 
     def start(self) -> None:
         self.running = True
@@ -308,8 +331,9 @@ class Game:
                     if self.game_over:
                         self.reset()
                     else:
-                        # special effect
-                        pass
+                        if self.teleport_cooldown >= self.teleport_cooldown_initial:
+                            self.pigeon.random_teleport()
+                            self.teleport_cooldown = 0
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                     self.pigeon.moving_hori = False
@@ -320,17 +344,14 @@ class Game:
         '''
         Reset game to the initial
         '''
+        
         self.lives = Settings.lives_initial
         self.stones.empty()
         self.pigeon.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
         self.pigeon.rect.left = Settings.window_width // 2 - self.pigeon.rect.width // 2
         self.points = 0
         self.stone_spawn_cooldown_initial = 150
-        self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
-
-        for i in range(self.lives):
-            self.hearts.add(Heart(i))
-
+        self.stone_spawn_cooldown = 0
         self.game_over = False
 
     def update(self) -> None:
@@ -338,6 +359,10 @@ class Game:
         self.pigeon.update()
         self.stones.update()
         self.hearts.update()
+
+        # Increase teleport cooldown
+        if self.teleport_cooldown < self.teleport_cooldown_initial:
+            self.teleport_cooldown += 1
 
         # Respawn stones
         if self.stone_spawn_cooldown <= 0:
@@ -372,6 +397,14 @@ class Game:
         points_text_rect.left = 25
 
         self.screen.blit(points_text, points_text_rect)
+    
+    def draw_teleporter(self):
+        teleporter_text = self.font_teleports.render(Settings.title_teleporter.replace('%s', str(int((self.teleport_cooldown / self.teleport_cooldown_initial) * 100))), True, (255, 255, 255))
+        teleporter_text_rect = teleporter_text.get_rect()
+        teleporter_text_rect.top = Settings.window_height - 50
+        teleporter_text_rect.left = (Settings.window_width // 2) - (teleporter_text_rect.width // 2)
+
+        self.screen.blit(teleporter_text, teleporter_text_rect)
 
     def draw(self) -> None:
         self.background.draw()
@@ -379,6 +412,7 @@ class Game:
         self.stones.draw(self.screen)
         self.hearts.draw(self.screen)
         self.draw_points()
+        self.draw_teleporter()
         pygame.display.flip()
 
 if __name__ == '__main__':
