@@ -320,7 +320,6 @@ class Game:
         '''
         Reset game to the initial
         '''
-        
         self.lives = Settings.lives_initial
         self.stones.empty()
         self.pigeon.rect.top = Settings.window_height - Settings.pigeon_bottom_offset
