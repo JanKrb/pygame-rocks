@@ -35,7 +35,7 @@ class Settings:
     font_points = ('arialblack', 28)
 
 class Background(pygame.sprite.Sprite):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.image = pygame.image.load(os.path.join(Settings.path_images, 'background.png')).convert()
@@ -44,15 +44,12 @@ class Background(pygame.sprite.Sprite):
             Settings.window_height
         ))
 
-    def draw(self) -> None:
+    def draw(self):
         # Blit background image at coords 0/0 (top-left)
         game.screen.blit(self.image, (0, 0))
 
-    def update(self) -> None:
-        pass
-
 class PseudoStoneSprite(pygame.sprite.Sprite):
-    def __init__(self, pseudo_ratio) -> None:
+    def __init__(self, pseudo_ratio):
         super().__init__()
 
         '''
@@ -73,7 +70,7 @@ class PseudoStoneSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
 class Stone(pygame.sprite.Sprite):
-    def __init__(self, game, speed) -> None:
+    def __init__(self, game, speed):
         super().__init__()
 
         self.image = pygame.image.load(os.path.join(Settings.path_images, 'stone.png'))
@@ -88,10 +85,10 @@ class Stone(pygame.sprite.Sprite):
         self.rect.top = 15
         self.rect.left = self.find_free_space_on_y_axis(game)
     
-    def draw(self) -> None:
+    def draw(self):
         game.screen.blit(self.image, self.rect)
     
-    def update(self) -> None:
+    def update(self):
         self.rect.top += self.speed_y
         self.sprite_outside_screen()
         
@@ -136,7 +133,7 @@ class Stone(pygame.sprite.Sprite):
         return candidate
 
 class Pigeon(pygame.sprite.Sprite):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         self.image = pygame.image.load(os.path.join(Settings.path_images, 'pigeon.png'))
@@ -151,10 +148,10 @@ class Pigeon(pygame.sprite.Sprite):
         self.moving_hori = False
         self.moving_vert = False
     
-    def draw(self) -> None:
+    def draw(self):
         game.screen.blit(self.image, self.rect)
 
-    def update(self) -> None:
+    def update(self):
         if self.moving_hori:
             if self.direction_hori > 0:
                 self.move_right(self.speed)
@@ -231,7 +228,7 @@ class Pigeon(pygame.sprite.Sprite):
         self.rect.top += speed
 
 class Heart(pygame.sprite.Sprite):
-    def __init__(self, y_offset=0) -> None:
+    def __init__(self, y_offset=0):
         super().__init__()
 
         scale_ratio = 0.075
@@ -245,15 +242,12 @@ class Heart(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.top = Settings.window_height - Settings.heart_offset_top
         self.rect.left = (Settings.window_width - 150) + (25 * (y_offset + 1))
-    
-    def update(self):
-        pass
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
 class Game:
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
 
         # PyGame Init
@@ -291,7 +285,7 @@ class Game:
         self.font_points = pygame.font.SysFont(Settings.font_points[0], Settings.font_points[1])
         self.font_teleports = pygame.font.SysFont(Settings.font_points[0], Settings.font_points[1])
 
-    def start(self) -> None:
+    def start(self):
         self.running = True
 
         while self.running:
@@ -307,7 +301,7 @@ class Game:
 
         pygame.quit()
     
-    def watch_events(self) -> None:
+    def watch_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -339,7 +333,7 @@ class Game:
                 elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                     self.pigeon.moving_vert = False
 
-    def reset(self) -> None:
+    def reset(self):
         '''
         Reset game to the initial
         '''
@@ -353,7 +347,7 @@ class Game:
         self.stone_spawn_cooldown = 0
         self.game_over = False
 
-    def update(self) -> None:
+    def update(self):
         self.background.update()
         self.pigeon.update()
         self.stones.update()
@@ -371,7 +365,7 @@ class Game:
         else:
             self.stone_spawn_cooldown -= 1
 
-    def render_game_over(self) -> None:
+    def render_game_over(self):
         self.background.draw()
 
         text = self.font_pause.render(Settings.title_gameover, True, (0, 0, 0))
@@ -405,7 +399,7 @@ class Game:
 
         self.screen.blit(teleporter_text, teleporter_text_rect)
 
-    def draw(self) -> None:
+    def draw(self):
         self.background.draw()
         self.pigeon.draw()
         self.stones.draw(self.screen)
