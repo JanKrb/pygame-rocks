@@ -1,5 +1,4 @@
 from math import sqrt
-from typing import Set
 import pygame
 import os
 import random
