@@ -23,6 +23,7 @@ class Settings:
     stone_count_start = 10
     stone_count_max = 200
     lives_initial = 3
+    heart_offset_top = 50
 
     # Text
     title_gameover = 'Verloren!'
@@ -172,6 +173,7 @@ class Pigeon(pygame.sprite.Sprite):
 
         if len(hits) > 0:
             hits[0].kill() # Delete stone
+            game.hearts.remove(game.hearts.sprites()[0]) # Remove one heart
             self.hit_by_stone()
     
     def hit_by_stone(self):
@@ -209,6 +211,28 @@ class Pigeon(pygame.sprite.Sprite):
     def move_down(self, speed=1):
         self.rect.top += speed
 
+class Heart(pygame.sprite.Sprite):
+    def __init__(self, y_offset=0) -> None:
+        super().__init__()
+
+        scale_ratio = 0.075
+
+        self.image = pygame.image.load(os.path.join(Settings.path_images, 'heart.png')).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (
+            int(self.image.get_rect().width * scale_ratio),
+            int(self.image.get_rect().height * scale_ratio)
+        ))
+
+        self.rect = self.image.get_rect()
+        self.rect.top = Settings.window_height - Settings.heart_offset_top
+        self.rect.left = (Settings.window_width - 150) + (25 * (y_offset + 1))
+    
+    def update(self):
+        pass
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+
 class Game:
     def __init__(self) -> None:
         super().__init__()
@@ -236,6 +260,10 @@ class Game:
         self.stone_spawn_cooldown_initial = 150
         self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
         self.stone_spawn_cooldown_min = 20
+
+        self.hearts = pygame.sprite.Group()
+        for i in range(self.lives):
+            self.hearts.add(Heart(i))
 
         # Init fonts
         self.font_pause = pygame.font.SysFont(Settings.font_pause[0], Settings.font_pause[1])
@@ -300,12 +328,17 @@ class Game:
         self.points = 0
         self.stone_spawn_cooldown_initial = 150
         self.stone_spawn_cooldown = self.stone_spawn_cooldown_initial
+
+        for i in range(self.lives):
+            self.hearts.add(Heart(i))
+
         self.game_over = False
 
     def update(self) -> None:
         self.background.update()
         self.pigeon.update()
         self.stones.update()
+        self.hearts.update()
 
         # Respawn stones
         if self.stone_spawn_cooldown <= 0:
@@ -345,6 +378,7 @@ class Game:
         self.background.draw()
         self.pigeon.draw()
         self.stones.draw(self.screen)
+        self.hearts.draw(self.screen)
         self.draw_points()
         pygame.display.flip()
 
